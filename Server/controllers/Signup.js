@@ -4,7 +4,7 @@ import Generatetoken from "../utils/Generatetoken.js";
 const Signupuser = async (req, res, next) => {
     try {
         const { name, email, phone, bloodGroup, age, password } = req.body;
-        console.log(req.body)
+
 
         if (name && email && phone && bloodGroup && age && password) {
             const findexsistinguser = await DonorUserexport.findOne(

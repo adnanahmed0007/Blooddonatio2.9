@@ -1,7 +1,6 @@
 import jwt from "jsonwebtoken";
 
 const Generatetoken = async (user_Id, res) => {
-  console.log(process.env.JWT_SECRET + " " + "api ");
   const token = jwt.sign(
     { user_Id },
     process.env.JWT_SECRET,

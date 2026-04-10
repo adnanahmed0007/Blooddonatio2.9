@@ -4,10 +4,10 @@ const verifyJwt = async (req, res, next) => {
     try {
         const mySecretKey = process.env.JWT_SECRET; // ✅ inside
 
-        console.log("SECRET:", mySecretKey);
+
         const token = req.cookies.jwt;
 
-        console.log("TOKEN:", token, +" kmww");
+
 
         if (!token) {
             return res.status(401).json({
