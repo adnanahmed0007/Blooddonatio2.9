@@ -21,7 +21,7 @@ const Login = () => {
 
     try {
       const res = await axios.post(
-        `${import.meta.env.VITE_API_URL}/auth/api/login`,
+        `https://blooddonatio2-9.onrender.com/auth/api/login`,
         formData,
         { withCredentials: true }
       );
