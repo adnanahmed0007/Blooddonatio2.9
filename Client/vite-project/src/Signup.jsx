@@ -28,7 +28,7 @@ const Signup = () => {
 
     try {
       const res = await axios.post(
-        "http://localhost:9090/auth/api/signup",
+        `${import.meta.env.VITE_API_URL}/auth/api/signup`,
         formData,
         { withCredentials: true }
       );

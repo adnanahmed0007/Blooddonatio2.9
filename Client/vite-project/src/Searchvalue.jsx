@@ -12,7 +12,7 @@ const BloodBadge = ({ group }) => (
   </div>
 );
 
-const InfoRow = ({ icon: Icon, label, text }) => (
+const InfoRow = ({ label, text }) => (
   <div className="flex items-start gap-3">
     <div className="w-8 h-8 rounded-lg bg-red-50 flex items-center justify-center flex-shrink-0 mt-0.5">
       <Icon className="w-4 h-4 text-red-500" />
@@ -108,7 +108,7 @@ const SearchValue = () => {
     if (donors.length === 0) {
       setLoading(true);
       axios
-        .get("http://localhost:9090/auth/dontaion/api/donation/api/getall", {
+        .get(`${import.meta.env.VITE_API_URL}/auth/dontaion/api/donation/api/getall`, {
           withCredentials: true,
         })
         .then((res) => {

@@ -21,11 +21,10 @@ const Login = () => {
 
     try {
       const res = await axios.post(
-        "http://localhost:9090/auth/api/login",
+        `${import.meta.env.VITE_API_URL}/auth/api/login`,
         formData,
         { withCredentials: true }
       );
-
       setLoading(false);
       setMessage(res.data.message); // OTP sent message
 

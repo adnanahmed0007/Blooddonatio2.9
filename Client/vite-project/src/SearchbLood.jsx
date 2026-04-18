@@ -33,7 +33,7 @@ const SearchBlood = () => {
       };
 
       const res = await axios.post(
-        "http://localhost:9090/auth/dontaion/api/donation/api/get",
+        `${import.meta.env.VITE_API_URL}/auth/dontaion/api/donation/api/get`,
         payload,
         { withCredentials: true }
       );

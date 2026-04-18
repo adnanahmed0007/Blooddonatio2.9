@@ -11,7 +11,7 @@ const Logout = () => {
         try {
             setLoading(true);
 
-            const res = await axios.get("http://localhost:9090/auth/api/logout", {
+            const res = await axios.get(`${import.meta.env.VITE_API_URL}/auth/api/logout`, {
                 withCredentials: true,
             });
 
