@@ -26,6 +26,7 @@ const Header = () => {
     { name: "Home", path: "/", icon: Heart },
     { name: "Find Blood", path: "/search", icon: Search },
     { name: "Donate", path: "/donate", icon: Droplet },
+    { name: "Find Blood", path: "/results", icon: Search },
   ];
 
   const authItems = [
