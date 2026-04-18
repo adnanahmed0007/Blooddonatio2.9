@@ -15,7 +15,7 @@ const BloodBadge = ({ group }) => (
 const InfoRow = ({ label, text }) => (
   <div className="flex items-start gap-3">
     <div className="w-8 h-8 rounded-lg bg-red-50 flex items-center justify-center flex-shrink-0 mt-0.5">
-      <Icon className="w-4 h-4 text-red-500" />
+
     </div>
     <div className="min-w-0">
       <p className="text-xs text-gray-400 font-medium uppercase tracking-wide">{label}</p>
@@ -108,7 +108,7 @@ const SearchValue = () => {
     if (donors.length === 0) {
       setLoading(true);
       axios
-        .get(`${import.meta.env.VITE_API_URL}/auth/dontaion/api/donation/api/getall`, {
+        .get(`https://blooddonatio2-9.onrender.com/auth/dontaion/api/donation/api/getall`, {
           withCredentials: true,
         })
         .then((res) => {
