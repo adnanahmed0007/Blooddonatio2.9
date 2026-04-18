@@ -26,7 +26,7 @@ const Donate = () => {
 
     try {
       const res = await axios.post(
-        `https://blooddonatio2-9.onrender.com/auth/dontaion/api/register`,
+        `https://blooddonatio2-9.onrender.com/auth/dontaion/api/donation/api/register`,
         formData,
         { withCredentials: true }
       );

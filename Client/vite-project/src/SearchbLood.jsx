@@ -33,7 +33,7 @@ const SearchBlood = () => {
       };
 
       const res = await axios.post(
-        `https://blooddonatio2-9.onrender.com/auth/dontaion/api/get`,
+        `https://blooddonatio2-9.onrender.com/auth/dontaion/api/donation/api/get`,
         payload,
         { withCredentials: true }
       );
