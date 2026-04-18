@@ -8,10 +8,10 @@ const Generatetoken = async (user_Id, res) => {
   );
 
   res.cookie("jwt", token, {
-    maxAge: 15 * 24 * 60 * 60 * 1000,
     httpOnly: true,
-    secure: false,       // ✅ CHANGE THIS
-    sameSite: "lax",     // ✅ CHANGE THIS
+    secure: true,
+    sameSite: "None",
+    maxAge: 24 * 60 * 60 * 1000,
   });
 
   return token;
