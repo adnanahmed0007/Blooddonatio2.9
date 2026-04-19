@@ -7,7 +7,7 @@ import Login from "./Login"
 import SearchBlood from "./SearchbLood"
 import Header from "./Header"
 
-import SearchValue from "./Searchvalue"
+
 import Logout from "./Logout"
 
 
@@ -27,7 +27,6 @@ const App = () => {
         <Route path="/login" element={<Login />} />
         <Route path="/search" element={<SearchBlood />} />
 
-        <Route path="/results" element={<SearchValue />} />
         <Route path="/logout" element={<Logout />} />
 
 

@@ -2,8 +2,8 @@ import React, { useState } from "react";
 import axios from "axios";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { useNavigate } from "react-router-dom";
-import { Search, Droplet, Hospital, Phone, MessageSquare, Heart, Clock, Users, AlertCircle } from "lucide-react";
+
+import { Search, Droplet, Hospital, Phone, MessageSquare, Heart, Clock, Users, AlertCircle, MapPin, Calendar, CheckCircle, User } from "lucide-react";
 
 const SearchBlood = () => {
   const [formData, setFormData] = useState({
@@ -14,7 +14,8 @@ const SearchBlood = () => {
   });
 
   const [loading, setLoading] = useState(false);
-  const navigate = useNavigate();
+  const [donors, setDonors] = useState([]);
+  const [searchSuccess, setSearchSuccess] = useState(false);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -23,6 +24,8 @@ const SearchBlood = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
+    setDonors([]);
+    setSearchSuccess(false);
 
     try {
       const payload = {
@@ -37,14 +40,16 @@ const SearchBlood = () => {
         payload,
         { withCredentials: true }
       );
-      console.log(res.data);
+
+      const fetchedDonors = res.data?.fectchadat || [];
+      setDonors(fetchedDonors);
+      setSearchSuccess(true);
 
       setLoading(false);
       toast.success("✅ Your request has been submitted successfully!", {
         position: "top-center",
         autoClose: 3000,
       });
-      navigate("/results", { state: { donors: res.data.fectchadat } });
 
       setFormData({
         bloodGroup: "",
@@ -59,6 +64,15 @@ const SearchBlood = () => {
         { position: "top-center", autoClose: 3000 }
       );
     }
+  };
+
+  const formatDate = (dateStr) => {
+    if (!dateStr) return "N/A";
+    return new Date(dateStr).toLocaleDateString("en-IN", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    });
   };
 
   return (
@@ -293,6 +307,118 @@ const SearchBlood = () => {
           </div>
         </div>
 
+        {/* ✅ DONOR RESULTS SECTION */}
+        {searchSuccess && (
+          <div className="mt-12 animate-fadeInUp">
+
+            {/* Results Header */}
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl flex items-center justify-center">
+                <CheckCircle className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <h2 className="text-2xl font-black text-gray-900">
+                  🎉 We Found {donors.length} Donor{donors.length !== 1 ? "s" : ""}!
+                </h2>
+                <p className="text-sm text-gray-500">Contact them directly to arrange donation</p>
+              </div>
+            </div>
+
+            {donors.length === 0 ? (
+              <div className="bg-white/80 backdrop-blur-lg rounded-2xl shadow-xl p-10 border border-gray-200 text-center">
+                <AlertCircle className="w-12 h-12 text-orange-400 mx-auto mb-3" />
+                <p className="text-lg font-semibold text-gray-700">No donors found nearby</p>
+                <p className="text-sm text-gray-500 mt-1">Try a different hospital or blood group</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                {donors.map((donor, idx) => (
+                  <div
+                    key={donor._id || idx}
+                    className="bg-white/90 backdrop-blur-lg rounded-2xl shadow-xl border border-gray-200 overflow-hidden hover:shadow-2xl hover:-translate-y-1 transition-all duration-300"
+                    style={{ animationDelay: `${idx * 100}ms` }}
+                  >
+                    {/* Card Top - Blood Group Badge */}
+                    <div className="bg-gradient-to-r from-red-600 to-rose-600 px-6 py-4 flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
+                          <User className="w-5 h-5 text-white" />
+                        </div>
+                        <div>
+                          <p className="text-white/80 text-xs font-medium">Blood Donor</p>
+                          <p className="text-white font-bold text-sm">Available</p>
+                        </div>
+                      </div>
+                      <div className="bg-white rounded-xl px-4 py-2 text-center">
+                        <span className="text-red-600 font-black text-xl">{donor.bloodGroup}</span>
+                      </div>
+                    </div>
+
+                    {/* Card Body - Donor Details */}
+                    <div className="p-5 space-y-3">
+
+                      {/* Hospital */}
+                      <div className="flex items-start gap-3">
+                        <div className="w-8 h-8 bg-red-50 rounded-lg flex items-center justify-center flex-shrink-0">
+                          <Hospital className="w-4 h-4 text-red-600" />
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-400 font-medium uppercase tracking-wide">Hospital</p>
+                          <p className="text-sm font-semibold text-gray-800 capitalize">{donor.NearestHospital || "N/A"}</p>
+                        </div>
+                      </div>
+
+                      {/* Address */}
+                      <div className="flex items-start gap-3">
+                        <div className="w-8 h-8 bg-red-50 rounded-lg flex items-center justify-center flex-shrink-0">
+                          <MapPin className="w-4 h-4 text-red-600" />
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-400 font-medium uppercase tracking-wide">Address</p>
+                          <p className="text-sm font-semibold text-gray-800">{donor.Address || "N/A"}</p>
+                        </div>
+                      </div>
+
+                      {/* Phone */}
+                      <div className="flex items-start gap-3">
+                        <div className="w-8 h-8 bg-red-50 rounded-lg flex items-center justify-center flex-shrink-0">
+                          <Phone className="w-4 h-4 text-red-600" />
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-400 font-medium uppercase tracking-wide">Contact</p>
+                          <p className="text-sm font-semibold text-gray-800">{donor.phoneNumber || "N/A"}</p>
+                        </div>
+                      </div>
+
+                      {/* Register Date */}
+                      <div className="flex items-start gap-3">
+                        <div className="w-8 h-8 bg-red-50 rounded-lg flex items-center justify-center flex-shrink-0">
+                          <Calendar className="w-4 h-4 text-red-600" />
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-400 font-medium uppercase tracking-wide">Registered On</p>
+                          <p className="text-sm font-semibold text-gray-800">{formatDate(donor.Registerday || donor.createdAt)}</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Card Footer - Call Button */}
+                    <div className="px-5 pb-5">
+                      <a
+                        href={`tel:${donor.phoneNumber}`}
+                        className="w-full bg-gradient-to-r from-red-600 to-rose-600 text-white py-3 rounded-xl font-bold text-sm shadow-md hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-200 flex items-center justify-center gap-2"
+                      >
+                        <Phone className="w-4 h-4" />
+                        Call Donor
+                      </a>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Bottom Info Banner */}
         <div className="mt-12 bg-white/80 backdrop-blur-lg rounded-2xl shadow-xl p-6 border border-gray-200">
           <div className="flex items-center justify-center gap-8 flex-wrap">
@@ -325,8 +451,23 @@ const SearchBlood = () => {
           75% { transform: translate(50px, 50px) scale(1.05); }
         }
 
+        @keyframes fadeInUp {
+          from {
+            opacity: 0;
+            transform: translateY(30px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+
         .animate-blob {
           animation: blob 7s infinite;
+        }
+
+        .animate-fadeInUp {
+          animation: fadeInUp 0.6s ease-out forwards;
         }
 
         .animation-delay-2000 {
