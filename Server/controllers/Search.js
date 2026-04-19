@@ -24,7 +24,7 @@ const Search = async (req, res, next) => {
                 bloodGroup: bloodGroup.trim(),
                 NearestHospital: { $regex: new RegExp(NearestHospital.trim(), "i") },
             });
-
+            console.log(fectchadat)
             if (fectchadat.length == 0) {
                 return res
                     .status(404)

@@ -1,10 +1,10 @@
 const Logout = async (req, res) => {
     try {
-
         res.clearCookie("jwt", {
             httpOnly: true,
-            sameSite: "lax",
-            secure: process.env.NODE_ENV === "production"
+            secure: true,
+            sameSite: "None",
+            path: "/",
         });
 
         return res.status(200).json({
