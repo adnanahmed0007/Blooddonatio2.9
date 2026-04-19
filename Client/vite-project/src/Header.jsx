@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Link, NavLink, useLocation } from "react-router-dom";
-import { Menu, X, Heart, Droplet, Search, User, LogIn, UserPlus, LogOut } from "lucide-react";
+import { Menu, X, Heart, Droplet, Search, User, LogIn, UserPlus, LogOut, List } from "lucide-react";
 
 const Header = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -26,7 +26,7 @@ const Header = () => {
     { name: "Home", path: "/", icon: Heart },
     { name: "Find Blood", path: "/search", icon: Search },
     { name: "Donate", path: "/donate", icon: Droplet },
-    { name: "Find Blood", path: "/results", icon: Search },
+    { name: "ViewDonationList", path: "/results", icon: List },
   ];
 
   const authItems = [
