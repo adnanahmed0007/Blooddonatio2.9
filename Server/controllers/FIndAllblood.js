@@ -5,7 +5,7 @@ const FindAllBlood = async (req, res, next) => {
         const fetchdata = await DonorBloodDonationexport.find();
         console.log(fetchdata);
 
-        // ✅ Send it to frontend
+
         res.status(200).json({ success: true, fectchadat: fetchdata });
 
     } catch (e) {
