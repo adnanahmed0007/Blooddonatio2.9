@@ -2,9 +2,11 @@ import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
 import {
-  Heart, MapPin, Calendar, Phone, Search,
-  AlertCircle, ArrowLeft, Droplet, Building2
+  Heart, Phone, Search,
+  AlertCircle, ArrowLeft, Droplet, Lock
 } from "lucide-react";
+
+const BASE_URL = "https://blooddonatio2-9.onrender.com/auth";
 
 const BloodBadge = ({ group }) => (
   <div className="w-14 h-14 rounded-full bg-gradient-to-br from-red-600 to-rose-600 flex items-center justify-center flex-shrink-0 shadow-lg">
@@ -14,9 +16,7 @@ const BloodBadge = ({ group }) => (
 
 const InfoRow = ({ label, text }) => (
   <div className="flex items-start gap-3">
-    <div className="w-8 h-8 rounded-lg bg-red-50 flex items-center justify-center flex-shrink-0 mt-0.5">
-
-    </div>
+    <div className="w-8 h-8 rounded-lg bg-red-50 flex items-center justify-center flex-shrink-0 mt-0.5"></div>
     <div className="min-w-0">
       <p className="text-xs text-gray-400 font-medium uppercase tracking-wide">{label}</p>
       <p className="text-sm text-gray-800 font-semibold truncate">{text || "Not specified"}</p>
@@ -24,7 +24,7 @@ const InfoRow = ({ label, text }) => (
   </div>
 );
 
-const DonorCard = ({ donor, index }) => {
+const DonorCard = ({ donor, index, blurred }) => {
   const formattedDate = donor.Registerday
     ? (() => {
       const d = new Date(donor.Registerday);
@@ -36,15 +36,14 @@ const DonorCard = ({ donor, index }) => {
 
   return (
     <div
-      className="bg-white/90 backdrop-blur-lg rounded-3xl shadow-xl hover:shadow-2xl border border-gray-100 p-6 flex flex-col gap-5 transition-all duration-300 hover:-translate-y-2"
+      className={`bg-white/90 backdrop-blur-lg rounded-3xl shadow-xl border border-gray-100 p-6 flex flex-col gap-5 transition-all duration-300 ${blurred ? "blur-sm pointer-events-none select-none" : "hover:shadow-2xl hover:-translate-y-2"}`}
       style={{ animationDelay: `${index * 80}ms` }}
     >
-      {/* Card Header */}
       <div className="flex items-center gap-4">
         <BloodBadge group={donor.bloodGroup} />
         <div className="min-w-0 flex-1">
           <p className="font-black text-gray-900 text-lg truncate">
-            {donor.name || "Anonymous Donor"}
+            {blurred ? "••••••••••" : (donor.name || "Anonymous Donor")}
           </p>
           <div className="flex items-center gap-1.5 mt-1">
             <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
@@ -52,27 +51,21 @@ const DonorCard = ({ donor, index }) => {
           </div>
         </div>
       </div>
-
-      {/* Divider */}
       <div className="border-t border-dashed border-gray-200"></div>
-
-      {/* Info Rows */}
       <div className="flex flex-col gap-4">
-        <InfoRow icon={Building2} label="Nearest Hospital" text={donor.NearestHospital} />
-        <InfoRow icon={MapPin} label="Address" text={donor.Address} />
-        <InfoRow icon={Calendar} label="Available From" text={formattedDate} />
-        <InfoRow icon={Phone} label="Contact" text={String(donor.phoneNumber)} />
+        <InfoRow label="Nearest Hospital" text={blurred ? "••••••••" : donor.NearestHospital} />
+        <InfoRow label="Address" text={blurred ? "••••••••" : donor.Address} />
+        <InfoRow label="Available From" text={blurred ? "••••••••" : formattedDate} />
+        <InfoRow label="Contact" text={blurred ? "••••••••" : String(donor.phoneNumber)} />
       </div>
 
-      {/* CTA */}
-      <a
-        href={`tel:${donor.phoneNumber}`}
+      <a href={blurred ? undefined : `tel:${donor.phoneNumber}`}
         className="mt-auto w-full bg-gradient-to-r from-red-600 to-rose-600 text-white text-sm font-bold py-3 rounded-2xl flex items-center justify-center gap-2 hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-300"
       >
         <Phone className="w-4 h-4" />
         <span>Call Donor</span>
       </a>
-    </div>
+    </div >
   );
 };
 
@@ -99,26 +92,20 @@ const SearchValue = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
-  // donors can come from navigation state OR we fetch all from API
   const [donors, setDonors] = useState(location.state?.donors || []);
   const [loading, setLoading] = useState(false);
+  const [isLoggedIn] = useState(!!localStorage.getItem("authToken"));
 
   useEffect(() => {
-    // If no donors passed via navigation, fetch all from your API
     if (donors.length === 0) {
       setLoading(true);
       axios
-        .get(`https://blooddonatio2-9.onrender.com/auth/dontaion/api/donation/api/getall`, {
-          withCredentials: true,
-        })
+        .get(`${BASE_URL}/dontaion/api/donation/api/getall`, { withCredentials: true })
         .then((res) => {
-          // handle both { fectchadat: [...] } and plain array
           const data = res.data?.fectchadat || res.data || [];
           setDonors(data);
         })
-        .catch((err) => {
-          console.error("Failed to fetch donors", err);
-        })
+        .catch((err) => console.error("Failed to fetch donors", err))
         .finally(() => setLoading(false));
     }
   }, []);
@@ -155,16 +142,46 @@ const SearchValue = () => {
               {loading
                 ? "Looking for donors..."
                 : donors.length > 0
-                  ? `${donors.length} donor${donors.length > 1 ? "s" : ""} found — scroll to explore`
+                  ? `${donors.length} donor${donors.length > 1 ? "s" : ""} found — ${isLoggedIn ? "scroll to explore" : "login to view details"}`
                   : "No donors matched your search"}
             </p>
           </div>
-          {donors.length > 0 && !loading && (
-            <span className="ml-auto bg-red-50 text-red-700 font-bold text-sm px-4 py-2 rounded-full border border-red-100">
-              {donors.length} result{donors.length > 1 ? "s" : ""}
-            </span>
-          )}
+          <div className="ml-auto flex items-center gap-3">
+            {donors.length > 0 && !loading && (
+              <span className="bg-red-50 text-red-700 font-bold text-sm px-4 py-2 rounded-full border border-red-100">
+                {donors.length} result{donors.length > 1 ? "s" : ""}
+              </span>
+            )}
+            {!isLoggedIn && (
+              <button
+                onClick={() => navigate("/login")}
+                className="flex items-center gap-2 bg-gradient-to-r from-red-600 to-rose-600 text-white text-sm font-bold px-5 py-2.5 rounded-2xl shadow hover:shadow-lg transition-all"
+              >
+                <Lock className="w-4 h-4" />
+                Login / Sign Up
+              </button>
+            )}
+          </div>
         </div>
+
+        {/* Not logged in banner */}
+        {!isLoggedIn && donors.length > 0 && !loading && (
+          <div
+            className="bg-amber-50 border border-amber-300 rounded-2xl p-5 flex items-center gap-4 mb-8 cursor-pointer hover:bg-amber-100 transition"
+            onClick={() => navigate("/login")}
+          >
+            <div className="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center flex-shrink-0">
+              <Lock className="w-5 h-5 text-amber-600" />
+            </div>
+            <div>
+              <p className="font-bold text-amber-800 text-sm">Login required to view donor details</p>
+              <p className="text-amber-700 text-xs mt-0.5">
+                Donor names, contacts and addresses are hidden.{" "}
+                <span className="underline font-semibold">Click here to login or sign up for free.</span>
+              </p>
+            </div>
+          </div>
+        )}
 
         {/* Loading Skeleton */}
         {loading && (
@@ -202,20 +219,57 @@ const SearchValue = () => {
             <EmptyState navigate={navigate} />
           ) : (
             <>
-              {/* Privacy Notice */}
-              <div className="bg-blue-50 border border-blue-200 rounded-2xl p-4 flex items-start gap-3 mb-8">
-                <AlertCircle className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
-                <p className="text-sm text-blue-800">
-                  <strong>Privacy:</strong> Contact details are only visible to verified users.
-                  Please reach out to donors respectfully and only for genuine medical needs.
-                </p>
-              </div>
+              {isLoggedIn && (
+                <div className="bg-blue-50 border border-blue-200 rounded-2xl p-4 flex items-start gap-3 mb-8">
+                  <AlertCircle className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                  <p className="text-sm text-blue-800">
+                    <strong>Privacy:</strong> Contact details are only visible to verified users.
+                    Please reach out to donors respectfully and only for genuine medical needs.
+                  </p>
+                </div>
+              )}
 
-              {/* Donor Cards Grid — scrollable on mobile */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {donors.map((donor, index) => (
-                  <DonorCard key={donor._id || index} donor={donor} index={index} />
-                ))}
+              {/* Donor Cards Grid */}
+              <div className="relative">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {donors.map((donor, index) => (
+                    <DonorCard
+                      key={donor._id || index}
+                      donor={donor}
+                      index={index}
+                      blurred={!isLoggedIn}
+                    />
+                  ))}
+                </div>
+
+                {/* Overlay CTA when not logged in */}
+                {!isLoggedIn && (
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="bg-white/95 backdrop-blur-md rounded-3xl shadow-2xl border border-gray-100 p-10 text-center max-w-sm mx-auto">
+                      <div className="w-16 h-16 bg-gradient-to-br from-red-600 to-rose-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
+                        <Lock className="w-8 h-8 text-white" />
+                      </div>
+                      <h3 className="text-xl font-black text-gray-900 mb-2">Donors are locked</h3>
+                      <p className="text-gray-500 text-sm mb-4">
+                        Login or create a free account to view donor names, contact numbers, and locations.
+                      </p>
+                      <div className="flex flex-col gap-3">
+                        <button
+                          onClick={() => navigate("/login")}
+                          className="w-full bg-gradient-to-r from-red-600 to-rose-600 text-white font-bold py-3 rounded-2xl shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all"
+                        >
+                          Login
+                        </button>
+                        <button
+                          onClick={() => navigate("/signup")}
+                          className="w-full border-2 border-red-200 text-red-600 font-bold py-3 rounded-2xl hover:bg-red-50 transition-all"
+                        >
+                          Sign Up — It's Free
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Footer CTA */}
@@ -239,7 +293,6 @@ const SearchValue = () => {
         )}
       </div>
 
-      {/* Animations */}
       <style>{`
         @keyframes blob {
           0%, 100% { transform: translate(0, 0) scale(1); }
