@@ -2,10 +2,10 @@ import BloodRequiredexport from "../models/BloodRequired.js";
 
 const ViewAllBloodrequired = async (req, res, next) => {
     try {
-        console.log("hello")
 
+        console.log("hello")
         const findAll = await BloodRequiredexport.find();
-        console.log(findAll + "heou")
+
         if (findAll.length > 0) {
             res.status(200).json({ success: true, findAll: findAll });
         }
