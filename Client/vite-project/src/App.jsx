@@ -9,6 +9,7 @@ import Header from "./Header"
 import SearchValue from "./Searchvalue"
 
 import Logout from "./Logout"
+import ViewAllBloodRequired from "./ViewAllBloodRequired"
 
 
 
@@ -29,6 +30,7 @@ const App = () => {
         <Route path="/results" element={<SearchValue />} />
 
         <Route path="/logout" element={<Logout />} />
+        <Route path="/allviewblood" element={<ViewAllBloodRequired />} />
 
 
       </Routes>
