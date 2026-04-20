@@ -58,7 +58,7 @@ const BloodRequestCard = ({ request, index }) => {
                 <BloodBadge group={request.bloodGroup} />
                 <div className="min-w-0 flex-1">
                     <p className="font-black text-gray-900 text-lg truncate">
-                        {request.patientName || request.name || "Anonymous"}
+                        {request.query || request.patientName || request.name || "Anonymous"}
                     </p>
                     <div className="flex items-center gap-2 mt-1 flex-wrap">
                         <div className="flex items-center gap-1.5">
@@ -78,15 +78,15 @@ const BloodRequestCard = ({ request, index }) => {
 
             {/* Details */}
             <div className="flex flex-col gap-4">
-                <InfoRow icon={MapPin} label="Hospital / Location" text={request.hospital || request.location || request.address} />
-                <InfoRow icon={User} label="Requested By" text={request.requestedBy || request.name} />
+                <InfoRow icon={MapPin} label="Hospital / Location" text={request.NearestHospital} />
+                <InfoRow icon={User} label="Query / Reason" text={request.query} />
                 <InfoRow icon={Clock} label="Date Posted" text={formattedDate} />
-                <InfoRow icon={Phone} label="Contact" text={String(request.phoneNumber || request.contact || "")} />
+                <InfoRow icon={Phone} label="Contact" text={String(request.phone || "")} />
             </div>
 
             {/* CTA */}
             <a
-                href={`tel:${request.phoneNumber || request.contact}`}
+                href={`tel:${request.phone}`}
                 className="mt-auto w-full bg-gradient-to-r from-red-600 to-rose-600 text-white text-sm font-bold py-3 rounded-2xl flex items-center justify-center gap-2 hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-300"
             >
                 <Phone className="w-4 h-4" />
@@ -153,7 +153,7 @@ const ViewAllBloodRequired = () => {
 
     useEffect(() => {
         axios
-            .get(`http://localhost:9090/auth/dontaion/api/donation/api/getallbloodrequired`, { withCredentials: true })
+            .get(`${BASE_URL}/dontaion/api/donation/api/getallbloodrequired`, { withCredentials: true })
             .then((res) => {
                 const data = res.data?.findAll || res.data || [];
                 setRequests(Array.isArray(data) ? data : []);
