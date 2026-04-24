@@ -10,6 +10,7 @@ import SearchValue from "./Searchvalue"
 
 import Logout from "./Logout"
 import ViewAllBloodRequired from "./ViewAllBloodRequired"
+import Admin from "./Admin"
 
 
 
@@ -31,6 +32,7 @@ const App = () => {
 
         <Route path="/logout" element={<Logout />} />
         <Route path="/allviewblood" element={<ViewAllBloodRequired />} />
+        <Route path="/admin" element={<Admin />} />
 
 
       </Routes>
