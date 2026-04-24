@@ -1,11 +1,13 @@
 import React, { useState } from "react";
 import axios from "axios";
+
 import { useNavigate, Link } from "react-router-dom";
 import { User, Mail, Phone, Droplet, Calendar, Lock, Eye, EyeOff, Heart, UserPlus, Shield, KeyRound } from "lucide-react";
 
 // ⚠️ Admin secret key — must match the one in Admin.jsx
-const ADMIN_SECRET = "adnanahme12351";
 
+const ADMIN_SECRET = import.meta.env.VITE_ADMIN_NAME_PASSWORD;
+console.log("Admin secret key from env:", ADMIN_SECRET);
 const Signup = () => {
   const [formData, setFormData] = useState({
     name: "",
