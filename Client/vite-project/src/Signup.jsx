@@ -6,8 +6,9 @@ import { User, Mail, Phone, Droplet, Calendar, Lock, Eye, EyeOff, Heart, UserPlu
 
 // ⚠️ Admin secret key — must match the one in Admin.jsx
 
-const ADMIN_SECRET = import.meta.env.VITE_ADMIN_NAME_PASSWORD;
-console.log("Admin secret key from env:", ADMIN_SECRET);
+const ADMIN_SECRET = "AdnanAhmed";
+
+
 const Signup = () => {
   const [formData, setFormData] = useState({
     name: "",
