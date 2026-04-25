@@ -4,10 +4,11 @@ import {
     Heart, Users, Droplet, LogOut, Shield,
     Search, ChevronDown, Trash2, Eye, Bell, BarChart2,
     TrendingUp, CheckCircle, AlertCircle, X, Menu, HandHeart, Syringe,
-    RefreshCw, WifiOff
+    RefreshCw, WifiOff, Phone, MapPin, Hospital, Calendar, Hash,
+    MessageSquare, User
 } from "lucide-react";
 
-
+const API_BASE = "https://blooddonatio2-9.onrender.com";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 const BloodBadge = ({ group }) => {
@@ -45,20 +46,23 @@ const StatusBadge = ({ status }) => {
     );
 };
 
-const StatCard = ({ icon: Icon, label, value, color, trend }) => (
+const StatCard = ({ icon: Icon, label, value, color }) => (
     <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 border border-gray-100 shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
         <div className="flex items-center justify-between mb-4">
             <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${color}`}>
                 <Icon className="w-6 h-6 text-white" />
             </div>
-            {trend && (
-                <span className="flex items-center gap-1 text-xs font-semibold text-green-600 bg-green-50 px-2 py-1 rounded-full">
-                    <TrendingUp className="w-3 h-3" /> {trend}
-                </span>
-            )}
         </div>
         <p className="text-3xl font-black text-gray-900 mb-1">{value}</p>
         <p className="text-sm text-gray-500 font-medium">{label}</p>
+    </div>
+);
+
+// ── Detail row inside modal ────────────────────────────────────────────────────
+const DetailRow = ({ label, value }) => (
+    <div className="flex justify-between items-start gap-3 p-3 bg-gray-50 rounded-xl">
+        <span className="text-sm font-semibold text-gray-500 shrink-0">{label}</span>
+        <span className="text-sm font-bold text-gray-800 text-right break-all">{value || "—"}</span>
     </div>
 );
 
@@ -89,6 +93,15 @@ const ErrorState = ({ onRetry }) => (
     </div>
 );
 
+// ── Format date helper ─────────────────────────────────────────────────────────
+const fmtDate = (val) => {
+    if (!val) return "—";
+    return new Date(val).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
+};
+
+// ── Format phone (API sends numbers, not strings) ─────────────────────────────
+const fmtPhone = (val) => val ? String(val) : "—";
+
 // ═══════════════════════════════════════════════════════════════════════════════
 const Admin = () => {
     const [users, setUsers] = useState([]);
@@ -115,19 +128,14 @@ const Admin = () => {
 
     useEffect(() => { fetchAll(); }, []);
 
-    // ── CORRECT API URL ───────────────────────────────────────────────────────
-    // Router is mounted at: /auth/dontaion
-    // Route inside router:  GET /donation/api/getallusers
-    // Full path:            /auth/dontaion/donation/api/getallusers
     const fetchAll = async () => {
         setLoading(true);
         setApiError(false);
         try {
             const res = await axios.get(
-                `https://blooddonatio2-9.onrender.com/auth/dontaion/api/donation/api/getallusers`,
+                `${API_BASE}/auth/dontaion/api/donation/api/getallusers`,
                 { withCredentials: true }
             );
-            console.log(res)
             const u = res.data.users || [];
             const br = res.data.bloodrequired || [];
             const bd = res.data.blooddonation || [];
@@ -144,16 +152,22 @@ const Admin = () => {
     // ── Filter ────────────────────────────────────────────────────────────────
     useEffect(() => {
         const s = search.toLowerCase();
+
+        // users have: name, email, phone (number)
         setFilteredUsers(users.filter(u =>
-            (!s || u.name?.toLowerCase().includes(s) || u.email?.toLowerCase().includes(s) || u.phone?.includes(s)) &&
+            (!s || u.name?.toLowerCase().includes(s) || u.email?.toLowerCase().includes(s) || String(u.phone || "").includes(s)) &&
             (filterGroup === "All" || u.bloodGroup === filterGroup)
         ));
+
+        // bloodrequired has: NearestHospital, query, phone (number), bloodGroup — NO name field
         setFilteredRequired(bloodRequired.filter(r =>
-            (!s || r.name?.toLowerCase().includes(s) || r.hospital?.toLowerCase().includes(s) || r.phone?.includes(s)) &&
+            (!s || r.NearestHospital?.toLowerCase().includes(s) || r.query?.toLowerCase().includes(s) || String(r.phone || "").includes(s)) &&
             (filterGroup === "All" || r.bloodGroup === filterGroup)
         ));
+
+        // blooddonation has: Address, NearestHospital, phoneNumber (number), bloodGroup — NO name field
         setFilteredDonation(bloodDonation.filter(d =>
-            (!s || d.name?.toLowerCase().includes(s) || d.location?.toLowerCase().includes(s) || d.phone?.includes(s)) &&
+            (!s || d.Address?.toLowerCase().includes(s) || d.NearestHospital?.toLowerCase().includes(s) || String(d.phoneNumber || "").includes(s)) &&
             (filterGroup === "All" || d.bloodGroup === filterGroup)
         ));
     }, [search, filterGroup, users, bloodRequired, bloodDonation]);
@@ -168,43 +182,40 @@ const Admin = () => {
         if (!window.confirm("Remove this user?")) return;
         try {
             await axios.delete(`${API_BASE}/auth/api/donors/${id}`, { withCredentials: true });
+            setUsers(p => p.filter(u => u._id !== id));
             showNotification("User removed");
         } catch (err) {
             showNotification(err.response?.data?.message || "Failed to delete user", "error");
-            return;
         }
-        setUsers(p => p.filter(u => u._id !== id));
     };
 
     const handleDeleteRequired = async (id) => {
         if (!window.confirm("Remove this blood request?")) return;
         try {
             await axios.delete(`${API_BASE}/auth/api/bloodrequired/${id}`, { withCredentials: true });
+            setBloodRequired(p => p.filter(r => r._id !== id));
             showNotification("Blood request removed");
         } catch (err) {
             showNotification(err.response?.data?.message || "Failed to delete request", "error");
-            return;
         }
-        setBloodRequired(p => p.filter(r => r._id !== id));
     };
 
     const handleDeleteDonation = async (id) => {
         if (!window.confirm("Remove this donation record?")) return;
         try {
             await axios.delete(`${API_BASE}/auth/api/blooddonation/${id}`, { withCredentials: true });
+            setBloodDonation(p => p.filter(d => d._id !== id));
             showNotification("Donation record removed");
         } catch (err) {
             showNotification(err.response?.data?.message || "Failed to delete record", "error");
-            return;
         }
-        setBloodDonation(p => p.filter(d => d._id !== id));
     };
 
     const stats = [
-        { icon: Users, label: "Total Users", value: users.length, color: "bg-gradient-to-br from-red-500 to-rose-600", trend: null },
-        { icon: Droplet, label: "Blood Requests", value: bloodRequired.length, color: "bg-gradient-to-br from-orange-500 to-red-500", trend: null },
-        { icon: Syringe, label: "Willing Donors", value: bloodDonation.length, color: "bg-gradient-to-br from-pink-500 to-rose-500", trend: null },
-        { icon: CheckCircle, label: "Fulfilled Requests", value: bloodRequired.filter(r => r.status === "fulfilled").length, color: "bg-gradient-to-br from-red-600 to-pink-600", trend: null },
+        { icon: Users, label: "Total Users", value: users.length, color: "bg-gradient-to-br from-red-500 to-rose-600" },
+        { icon: Droplet, label: "Blood Requests", value: bloodRequired.length, color: "bg-gradient-to-br from-orange-500 to-red-500" },
+        { icon: Syringe, label: "Willing Donors", value: bloodDonation.length, color: "bg-gradient-to-br from-pink-500 to-rose-500" },
+        { icon: CheckCircle, label: "Fulfilled Requests", value: bloodRequired.filter(r => r.status === "fulfilled").length, color: "bg-gradient-to-br from-red-600 to-pink-600" },
     ];
 
     const navItems = [
@@ -221,7 +232,7 @@ const Admin = () => {
                 <input
                     type="text" placeholder={placeholder || "Search..."} value={search}
                     onChange={e => setSearch(e.target.value)}
-                    className="pl-9 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-red-400 focus:border-transparent transition-all w-52"
+                    className="pl-9 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-red-400 focus:border-transparent transition-all w-56"
                 />
             </div>
             <div className="relative">
@@ -238,10 +249,50 @@ const Admin = () => {
     );
 
     const tabTitles = {
-        dashboard: "Dashboard",
-        users: "All Users",
-        requests: "Blood Requests",
-        donations: "Willing Donors",
+        dashboard: "Dashboard", users: "All Users",
+        requests: "Blood Requests", donations: "Willing Donors",
+    };
+
+    // ── Modal field definitions using REAL field names from API ───────────────
+    const getModalFields = () => {
+        if (selectedType === "user") return [
+            { label: "Full Name", value: selectedItem.name },
+            { label: "Email", value: selectedItem.email },
+            { label: "Phone", value: fmtPhone(selectedItem.phone) },
+            { label: "Age", value: selectedItem.age ? `${selectedItem.age} years` : null },
+            { label: "Blood Group", value: selectedItem.bloodGroup },
+            { label: "Role", value: selectedItem.role || "donor" },
+            { label: "Registered", value: fmtDate(selectedItem.createdAt) },
+            { label: "User ID", value: selectedItem._id },
+        ];
+        if (selectedType === "required") return [
+            { label: "Blood Group", value: selectedItem.bloodGroup },
+            { label: "Phone", value: fmtPhone(selectedItem.phone) },
+            { label: "Nearest Hospital", value: selectedItem.NearestHospital },
+            { label: "Query / Reason", value: selectedItem.query },
+            { label: "Status", value: selectedItem.status || "pending" },
+            { label: "Requested On", value: fmtDate(selectedItem.createdAt) },
+            { label: "Record ID", value: selectedItem._id },
+        ];
+        // blooddonation
+        return [
+            { label: "Blood Group", value: selectedItem.bloodGroup },
+            { label: "Phone Number", value: fmtPhone(selectedItem.phoneNumber) },
+            { label: "Address", value: selectedItem.Address },
+            { label: "Nearest Hospital", value: selectedItem.NearestHospital },
+            { label: "Preferred Date", value: fmtDate(selectedItem.Registerday) },
+            { label: "Status", value: selectedItem.status || "pending" },
+            { label: "Registered On", value: fmtDate(selectedItem.createdAt) },
+            { label: "Donor User ID", value: selectedItem.UserIdinf },
+            { label: "Record ID", value: selectedItem._id },
+        ];
+    };
+
+    // ── Avatar initial (donation/request have no name) ─────────────────────────
+    const getInitial = (item, type) => {
+        if (type === "user") return item.name?.charAt(0)?.toUpperCase() || "U";
+        if (type === "required") return item.bloodGroup?.charAt(0) || "B";
+        return item.bloodGroup?.charAt(0) || "D";
     };
 
     return (
@@ -316,11 +367,7 @@ const Admin = () => {
                         </div>
                     </div>
                     <div className="flex items-center gap-3">
-                        <button
-                            onClick={fetchAll}
-                            title="Refresh data"
-                            className="p-2 rounded-xl hover:bg-red-50 transition-colors"
-                        >
+                        <button onClick={fetchAll} title="Refresh data" className="p-2 rounded-xl hover:bg-red-50 transition-colors">
                             <RefreshCw className="w-5 h-5 text-gray-600" />
                         </button>
                         <button className="relative p-2 rounded-xl hover:bg-red-50 transition-colors">
@@ -352,10 +399,7 @@ const Admin = () => {
                         <div className="bg-red-50 border border-red-200 rounded-2xl px-5 py-3 flex items-center gap-3 text-red-700 text-sm font-medium">
                             <AlertCircle className="w-4 h-4 flex-shrink-0" />
                             <span>Could not connect to API. Check your backend and CORS settings.</span>
-                            <button
-                                onClick={fetchAll}
-                                className="ml-auto flex items-center gap-1.5 px-3 py-1.5 bg-red-600 text-white rounded-lg text-xs font-bold hover:bg-red-700 transition-colors"
-                            >
+                            <button onClick={fetchAll} className="ml-auto flex items-center gap-1.5 px-3 py-1.5 bg-red-600 text-white rounded-lg text-xs font-bold hover:bg-red-700 transition-colors">
                                 <RefreshCw className="w-3 h-3" /> Retry
                             </button>
                         </div>
@@ -399,7 +443,7 @@ const Admin = () => {
                                             </button>
                                         </div>
 
-                                        {/* Recent Blood Requests */}
+                                        {/* Recent Blood Requests — no name, show blood group + hospital */}
                                         <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-md border border-gray-100 p-5">
                                             <h3 className="font-black text-gray-900 mb-4 flex items-center gap-2 text-sm">
                                                 <Droplet className="w-4 h-4 text-orange-600" /> Recent Requests
@@ -412,8 +456,8 @@ const Admin = () => {
                                                         <div key={r._id} className="flex items-center gap-3">
                                                             <BloodBadge group={r.bloodGroup} />
                                                             <div className="flex-1 min-w-0">
-                                                                <p className="text-sm font-bold text-gray-800 truncate">{r.name}</p>
-                                                                <p className="text-xs text-gray-400 truncate">{r.hospital || "—"}</p>
+                                                                <p className="text-sm font-bold text-gray-800 truncate">{r.NearestHospital || "Hospital not specified"}</p>
+                                                                <p className="text-xs text-gray-400 truncate">{fmtPhone(r.phone)}</p>
                                                             </div>
                                                             <StatusBadge status={r.status} />
                                                         </div>
@@ -425,7 +469,7 @@ const Admin = () => {
                                             </button>
                                         </div>
 
-                                        {/* Willing Donors */}
+                                        {/* Willing Donors — no name, show address + hospital */}
                                         <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-md border border-gray-100 p-5">
                                             <h3 className="font-black text-gray-900 mb-4 flex items-center gap-2 text-sm">
                                                 <HandHeart className="w-4 h-4 text-pink-600" /> Willing Donors
@@ -438,8 +482,8 @@ const Admin = () => {
                                                         <div key={d._id} className="flex items-center gap-3">
                                                             <BloodBadge group={d.bloodGroup} />
                                                             <div className="flex-1 min-w-0">
-                                                                <p className="text-sm font-bold text-gray-800 truncate">{d.name}</p>
-                                                                <p className="text-xs text-gray-400 truncate">{d.location || d.Address || "—"}</p>
+                                                                <p className="text-sm font-bold text-gray-800 truncate">{d.Address || "Address not provided"}</p>
+                                                                <p className="text-xs text-gray-400 truncate">{d.NearestHospital || "—"}</p>
                                                             </div>
                                                             <StatusBadge status={d.status} />
                                                         </div>
@@ -476,33 +520,33 @@ const Admin = () => {
                                     <table className="w-full">
                                         <thead>
                                             <tr className="bg-gray-50/80 text-left">
-                                                {["User", "Contact", "Blood Group", "Age", "Role", "Actions"].map(h => (
-                                                    <th key={h} className="px-6 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider">{h}</th>
+                                                {["User", "Email", "Phone", "Blood Group", "Age", "Role", "Registered", "Actions"].map(h => (
+                                                    <th key={h} className="px-5 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap">{h}</th>
                                                 ))}
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-gray-50">
                                             {filteredUsers.map(u => (
                                                 <tr key={u._id} className="hover:bg-red-50/30 transition-colors group">
-                                                    <td className="px-6 py-4">
+                                                    <td className="px-5 py-4">
                                                         <div className="flex items-center gap-3">
                                                             <div className="w-9 h-9 bg-gradient-to-br from-red-500 to-rose-500 rounded-xl flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
                                                                 {u.name?.charAt(0)?.toUpperCase() || "?"}
                                                             </div>
                                                             <div>
-                                                                <p className="font-bold text-gray-900 text-sm">{u.name}</p>
-                                                                <p className="text-xs text-gray-400">{u._id?.slice(-6)}</p>
+                                                                <p className="font-bold text-gray-900 text-sm whitespace-nowrap">{u.name}</p>
+                                                                <p className="text-xs text-gray-400 font-mono">{u._id?.slice(-6)}</p>
                                                             </div>
                                                         </div>
                                                     </td>
-                                                    <td className="px-6 py-4">
-                                                        <p className="text-sm text-gray-700">{u.email}</p>
-                                                        <p className="text-xs text-gray-400">{u.phone}</p>
-                                                    </td>
-                                                    <td className="px-6 py-4"><BloodBadge group={u.bloodGroup} /></td>
-                                                    <td className="px-6 py-4 text-sm font-semibold text-gray-700">{u.age ? `${u.age} yrs` : "—"}</td>
-                                                    <td className="px-6 py-4"><RoleBadge role={u.role} /></td>
-                                                    <td className="px-6 py-4">
+                                                    <td className="px-5 py-4 text-sm text-gray-700">{u.email}</td>
+                                                    {/* phone comes as a number from API */}
+                                                    <td className="px-5 py-4 text-sm text-gray-700 font-mono">{fmtPhone(u.phone)}</td>
+                                                    <td className="px-5 py-4"><BloodBadge group={u.bloodGroup} /></td>
+                                                    <td className="px-5 py-4 text-sm font-semibold text-gray-700">{u.age ? `${u.age} yrs` : "—"}</td>
+                                                    <td className="px-5 py-4"><RoleBadge role={u.role} /></td>
+                                                    <td className="px-5 py-4 text-xs text-gray-500 whitespace-nowrap">{fmtDate(u.createdAt)}</td>
+                                                    <td className="px-5 py-4">
                                                         <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                                                             <button onClick={() => { setSelectedItem(u); setSelectedType("user"); }} className="p-1.5 rounded-lg hover:bg-blue-100 text-blue-600 transition-colors">
                                                                 <Eye className="w-4 h-4" />
@@ -529,7 +573,7 @@ const Admin = () => {
                                     <Droplet className="w-5 h-5 text-orange-600" /> Blood Requests
                                     <span className="bg-orange-100 text-orange-700 text-xs font-bold px-2 py-0.5 rounded-full">{filteredRequired.length}</span>
                                 </h2>
-                                <FilterBar placeholder="Search name, hospital..." />
+                                <FilterBar placeholder="Search hospital, phone, query..." />
                             </div>
                             {loading ? <Spinner /> : apiError ? <ErrorState onRetry={fetchAll} /> : filteredRequired.length === 0 ? (
                                 <div className="text-center py-20 text-gray-400">
@@ -541,31 +585,25 @@ const Admin = () => {
                                     <table className="w-full">
                                         <thead>
                                             <tr className="bg-gray-50/80 text-left">
-                                                {["Patient", "Blood Group", "Units", "Hospital", "Phone", "Status", "Actions"].map(h => (
-                                                    <th key={h} className="px-6 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider">{h}</th>
+                                                {["Blood Group", "Phone", "Nearest Hospital", "Query / Reason", "Status", "Requested On", "Actions"].map(h => (
+                                                    <th key={h} className="px-5 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap">{h}</th>
                                                 ))}
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-gray-50">
                                             {filteredRequired.map(r => (
                                                 <tr key={r._id} className="hover:bg-orange-50/30 transition-colors group">
-                                                    <td className="px-6 py-4">
-                                                        <div className="flex items-center gap-3">
-                                                            <div className="w-9 h-9 bg-gradient-to-br from-orange-500 to-red-500 rounded-xl flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
-                                                                {r.name?.charAt(0)?.toUpperCase() || "?"}
-                                                            </div>
-                                                            <div>
-                                                                <p className="font-bold text-gray-900 text-sm">{r.name}</p>
-                                                                <p className="text-xs text-gray-400">{r._id?.slice(-6)}</p>
-                                                            </div>
-                                                        </div>
+                                                    <td className="px-5 py-4"><BloodBadge group={r.bloodGroup} /></td>
+                                                    {/* phone is a number in bloodrequired */}
+                                                    <td className="px-5 py-4 text-sm font-mono text-gray-700">{fmtPhone(r.phone)}</td>
+                                                    <td className="px-5 py-4 text-sm text-gray-700">{r.NearestHospital || "—"}</td>
+                                                    {/* query is the reason/message field */}
+                                                    <td className="px-5 py-4 text-sm text-gray-600 max-w-xs">
+                                                        <p className="truncate" title={r.query}>{r.query || "—"}</p>
                                                     </td>
-                                                    <td className="px-6 py-4"><BloodBadge group={r.bloodGroup} /></td>
-                                                    <td className="px-6 py-4 text-sm font-bold text-gray-700">{r.units || 1} unit{(r.units || 1) > 1 ? "s" : ""}</td>
-                                                    <td className="px-6 py-4 text-sm text-gray-600">{r.hospital || "—"}</td>
-                                                    <td className="px-6 py-4 text-sm text-gray-600">{r.phone || "—"}</td>
-                                                    <td className="px-6 py-4"><StatusBadge status={r.status} /></td>
-                                                    <td className="px-6 py-4">
+                                                    <td className="px-5 py-4"><StatusBadge status={r.status} /></td>
+                                                    <td className="px-5 py-4 text-xs text-gray-500 whitespace-nowrap">{fmtDate(r.createdAt)}</td>
+                                                    <td className="px-5 py-4">
                                                         <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                                                             <button onClick={() => { setSelectedItem(r); setSelectedType("required"); }} className="p-1.5 rounded-lg hover:bg-blue-100 text-blue-600 transition-colors">
                                                                 <Eye className="w-4 h-4" />
@@ -592,7 +630,7 @@ const Admin = () => {
                                     <HandHeart className="w-5 h-5 text-pink-600" /> Willing Donors
                                     <span className="bg-pink-100 text-pink-700 text-xs font-bold px-2 py-0.5 rounded-full">{filteredDonation.length}</span>
                                 </h2>
-                                <FilterBar placeholder="Search name, location..." />
+                                <FilterBar placeholder="Search address, hospital, phone..." />
                             </div>
                             {loading ? <Spinner /> : apiError ? <ErrorState onRetry={fetchAll} /> : filteredDonation.length === 0 ? (
                                 <div className="text-center py-20 text-gray-400">
@@ -604,36 +642,25 @@ const Admin = () => {
                                     <table className="w-full">
                                         <thead>
                                             <tr className="bg-gray-50/80 text-left">
-                                                {["Donor", "Blood Group", "Location", "Hospital", "Phone", "Date", "Status", "Actions"].map(h => (
-                                                    <th key={h} className="px-6 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider">{h}</th>
+                                                {["Blood Group", "Phone", "Address", "Nearest Hospital", "Preferred Date", "Registered On", "Status", "Actions"].map(h => (
+                                                    <th key={h} className="px-5 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap">{h}</th>
                                                 ))}
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-gray-50">
                                             {filteredDonation.map(d => (
                                                 <tr key={d._id} className="hover:bg-pink-50/30 transition-colors group">
-                                                    <td className="px-6 py-4">
-                                                        <div className="flex items-center gap-3">
-                                                            <div className="w-9 h-9 bg-gradient-to-br from-pink-500 to-rose-500 rounded-xl flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
-                                                                {d.name?.charAt(0)?.toUpperCase() || "?"}
-                                                            </div>
-                                                            <div>
-                                                                <p className="font-bold text-gray-900 text-sm">{d.name}</p>
-                                                                <p className="text-xs text-gray-400">{d._id?.slice(-6)}</p>
-                                                            </div>
-                                                        </div>
-                                                    </td>
-                                                    <td className="px-6 py-4"><BloodBadge group={d.bloodGroup} /></td>
-                                                    <td className="px-6 py-4 text-sm text-gray-600">{d.location || d.Address || "—"}</td>
-                                                    <td className="px-6 py-4 text-sm text-gray-600">{d.NearestHospital || "—"}</td>
-                                                    <td className="px-6 py-4 text-sm text-gray-600">{d.phone || "—"}</td>
-                                                    <td className="px-6 py-4 text-sm text-gray-500">
-                                                        {(d.date || d.Registerday)
-                                                            ? new Date(d.date || d.Registerday).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })
-                                                            : "—"}
-                                                    </td>
-                                                    <td className="px-6 py-4"><StatusBadge status={d.status} /></td>
-                                                    <td className="px-6 py-4">
+                                                    <td className="px-5 py-4"><BloodBadge group={d.bloodGroup} /></td>
+                                                    {/* phoneNumber (not phone) for blooddonation */}
+                                                    <td className="px-5 py-4 text-sm font-mono text-gray-700">{fmtPhone(d.phoneNumber)}</td>
+                                                    {/* Address (capital A) is the location field */}
+                                                    <td className="px-5 py-4 text-sm text-gray-700">{d.Address || "—"}</td>
+                                                    <td className="px-5 py-4 text-sm text-gray-700">{d.NearestHospital || "—"}</td>
+                                                    {/* Registerday is the preferred donation date */}
+                                                    <td className="px-5 py-4 text-xs text-gray-500 whitespace-nowrap">{fmtDate(d.Registerday)}</td>
+                                                    <td className="px-5 py-4 text-xs text-gray-500 whitespace-nowrap">{fmtDate(d.createdAt)}</td>
+                                                    <td className="px-5 py-4"><StatusBadge status={d.status} /></td>
+                                                    <td className="px-5 py-4">
                                                         <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                                                             <button onClick={() => { setSelectedItem(d); setSelectedType("donation"); }} className="p-1.5 rounded-lg hover:bg-blue-100 text-blue-600 transition-colors">
                                                                 <Eye className="w-4 h-4" />
@@ -658,7 +685,7 @@ const Admin = () => {
             {/* ── Detail Modal ── */}
             {selectedItem && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-                    <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md p-8 relative">
+                    <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md p-8 relative max-h-[90vh] overflow-y-auto">
                         <button onClick={() => setSelectedItem(null)} className="absolute top-5 right-5 p-2 rounded-xl hover:bg-gray-100 transition-colors">
                             <X className="w-5 h-5 text-gray-500" />
                         </button>
@@ -669,37 +696,23 @@ const Admin = () => {
                                     : selectedType === "required"
                                         ? "bg-gradient-to-br from-orange-500 to-red-500"
                                         : "bg-gradient-to-br from-pink-500 to-rose-500"}`}>
-                                {selectedItem.name?.charAt(0)?.toUpperCase() || "?"}
+                                {getInitial(selectedItem, selectedType)}
                             </div>
-                            <h3 className="text-xl font-black text-gray-900">{selectedItem.name}</h3>
-                            {selectedItem.bloodGroup && <div className="mt-1"><BloodBadge group={selectedItem.bloodGroup} /></div>}
+                            <h3 className="text-xl font-black text-gray-900">
+                                {selectedType === "user"
+                                    ? selectedItem.name
+                                    : selectedType === "required"
+                                        ? `${selectedItem.bloodGroup} Request`
+                                        : `${selectedItem.bloodGroup} Donor`}
+                            </h3>
+                            {selectedItem.bloodGroup && (
+                                <div className="mt-2"><BloodBadge group={selectedItem.bloodGroup} /></div>
+                            )}
                         </div>
 
-                        <div className="space-y-3">
-                            {(selectedType === "user" ? [
-                                { label: "Email", value: selectedItem.email },
-                                { label: "Phone", value: selectedItem.phone },
-                                { label: "Age", value: selectedItem.age ? `${selectedItem.age} years` : "—" },
-                                { label: "Role", value: selectedItem.role || "donor" },
-                                { label: "User ID", value: selectedItem._id },
-                            ] : selectedType === "required" ? [
-                                { label: "Hospital", value: selectedItem.hospital || "—" },
-                                { label: "Units Needed", value: `${selectedItem.units || 1} unit(s)` },
-                                { label: "Phone", value: selectedItem.phone || "—" },
-                                { label: "Status", value: selectedItem.status || "pending" },
-                                { label: "Request ID", value: selectedItem._id },
-                            ] : [
-                                { label: "Location", value: selectedItem.location || selectedItem.Address || "—" },
-                                { label: "Nearest Hospital", value: selectedItem.NearestHospital || "—" },
-                                { label: "Phone", value: selectedItem.phone || "—" },
-                                { label: "Preferred Date", value: (selectedItem.date || selectedItem.Registerday) ? new Date(selectedItem.date || selectedItem.Registerday).toLocaleDateString("en-IN") : "—" },
-                                { label: "Status", value: selectedItem.status || "pending" },
-                                { label: "Record ID", value: selectedItem._id },
-                            ]).map(({ label, value }) => (
-                                <div key={label} className="flex justify-between items-center p-3 bg-gray-50 rounded-xl">
-                                    <span className="text-sm font-semibold text-gray-500">{label}</span>
-                                    <span className="text-sm font-bold text-gray-800 text-right max-w-xs truncate">{value}</span>
-                                </div>
+                        <div className="space-y-2">
+                            {getModalFields().map(({ label, value }) => (
+                                <DetailRow key={label} label={label} value={value} />
                             ))}
                         </div>
 
@@ -718,7 +731,7 @@ const Admin = () => {
                 </div>
             )}
 
-            <style >{`
+            <style>{`
                 @keyframes blob {
                     0%, 100% { transform: translate(0, 0) scale(1); }
                     33%       { transform: translate(20px, -30px) scale(1.1); }
