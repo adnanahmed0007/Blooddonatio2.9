@@ -6,7 +6,7 @@ import { User, Mail, Phone, Droplet, Calendar, Lock, Eye, EyeOff, Heart, UserPlu
 
 // ⚠️ Admin secret key — must match the one in Admin.jsx
 
-const ADMIN_SECRET = "AdnanAhmed";
+const ADMIN_SECRET = "VishantSingh";
 
 
 const Signup = () => {
