@@ -1,13 +1,11 @@
-import React, { useState, useEffect } from "react";
+  import React, { useState, useEffect } from "react";
 import axios from "axios";
 import {
     User, Mail, Phone, Droplet, Calendar, Heart, Shield,
     Edit3, LogOut, Award, Clock, Activity, ChevronRight,
-    CheckCircle, AlertCircle, Loader
+    CheckCircle, AlertCircle,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { useContext } from "react";
-import UserContext from "./Context1";
 
 const BLOOD_COLORS = {
     "A+": "from-red-500 to-rose-600",
@@ -34,7 +32,7 @@ const StatCard = ({ icon: Icon, label, value, accent }) => (
 const InfoRow = ({ icon: Icon, label, value, accent = "text-red-500" }) => (
     <div className="flex items-center gap-4 py-4 border-b border-gray-100 last:border-0 group">
         <div className="w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center group-hover:bg-red-50 transition-colors">
-            <Icon className={`w-4.5 h-4.5 ${accent} w-5 h-5`} />
+            <Icon className={`w-5 h-5 ${accent}`} />
         </div>
         <div className="flex-1 min-w-0">
             <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">{label}</p>
@@ -45,7 +43,6 @@ const InfoRow = ({ icon: Icon, label, value, accent = "text-red-500" }) => (
 );
 
 const Profile = () => {
-    const { setUser } = useContext(UserContext);
     const [profile, setProfile] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
@@ -70,14 +67,12 @@ const Profile = () => {
 
     const handleLogout = async () => {
         try {
-            await axios.post("https://blooddonatio2-9.onrender.com/auth/api/logout", {}, { withCredentials: true });
+            await axios.get("https://blooddonatio2-9.onrender.com/auth/api/logout", { withCredentials: true });
         } catch (_) { }
-        setUser(false);
         navigate("/login");
     };
 
     const isAdmin = profile?.role === "admin";
-    const bloodGradient = BLOOD_COLORS[profile?.bloodGroup] || "from-red-500 to-rose-600";
 
     if (loading) {
         return (
@@ -115,7 +110,6 @@ const Profile = () => {
     return (
         <div className="min-h-screen bg-gradient-to-br from-rose-50 via-white to-red-50 px-4 py-10">
 
-            {/* Ambient background blobs */}
             <div className="fixed inset-0 overflow-hidden pointer-events-none">
                 <div className="absolute -top-40 -right-40 w-80 h-80 bg-red-400 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob"></div>
                 <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-pink-400 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-2000"></div>
@@ -123,9 +117,8 @@ const Profile = () => {
 
             <div className="relative max-w-2xl mx-auto space-y-6">
 
-                {/* ── Hero Card ── */}
+                {/* Hero Card */}
                 <div className={`relative bg-gradient-to-br ${isAdmin ? "from-purple-600 to-indigo-700" : "from-red-600 to-rose-700"} rounded-3xl shadow-2xl overflow-hidden`}>
-                    {/* Decorative pattern */}
                     <div className="absolute inset-0 opacity-10">
                         <div className="absolute top-4 right-4 w-40 h-40 rounded-full border-4 border-white"></div>
                         <div className="absolute top-10 right-10 w-24 h-24 rounded-full border-4 border-white"></div>
@@ -135,7 +128,6 @@ const Profile = () => {
                     <div className="relative p-8">
                         <div className="flex items-start justify-between mb-6">
                             <div className="flex items-center gap-4">
-                                {/* Avatar */}
                                 <div className="relative">
                                     <div className="w-20 h-20 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center shadow-lg border border-white/30">
                                         {isAdmin
@@ -159,7 +151,6 @@ const Profile = () => {
                                 </div>
                             </div>
 
-                            {/* Blood Group Badge */}
                             {profile?.bloodGroup && (
                                 <div className="text-center bg-white/20 backdrop-blur-sm rounded-2xl px-4 py-3 border border-white/30">
                                     <Droplet className="w-5 h-5 text-white fill-current mx-auto mb-1" />
@@ -169,7 +160,6 @@ const Profile = () => {
                             )}
                         </div>
 
-                        {/* Action buttons */}
                         <div className="flex gap-3">
                             <button
                                 onClick={() => navigate("/edit-profile")}
@@ -187,7 +177,7 @@ const Profile = () => {
                     </div>
                 </div>
 
-                {/* ── Stats Row ── */}
+                {/* Stats Row */}
                 {!isAdmin && (
                     <div className="grid grid-cols-3 gap-4">
                         <StatCard icon={Heart} label="Donations" value={profile?.donationCount ?? 0} accent="from-red-500 to-rose-600" />
@@ -196,7 +186,7 @@ const Profile = () => {
                     </div>
                 )}
 
-                {/* ── Info Card ── */}
+                {/* Info Card */}
                 <div className="bg-white/80 backdrop-blur-lg rounded-3xl shadow-xl border border-gray-100 overflow-hidden">
                     <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
                         <h2 className="font-black text-gray-900 text-lg">Personal Information</h2>
@@ -204,7 +194,6 @@ const Profile = () => {
                             {isAdmin ? "Admin" : "Donor"}
                         </span>
                     </div>
-
                     <div className="px-6">
                         <InfoRow icon={User} label="Full Name" value={profile?.name} />
                         <InfoRow icon={Mail} label="Email Address" value={profile?.email} />
@@ -223,7 +212,7 @@ const Profile = () => {
                     </div>
                 </div>
 
-                {/* ── Donor CTA (only for donors) ── */}
+                {/* Donor CTA */}
                 {!isAdmin && (
                     <div className="relative bg-gradient-to-r from-red-600 to-rose-600 rounded-3xl p-6 shadow-xl overflow-hidden">
                         <div className="absolute right-4 top-1/2 -translate-y-1/2 opacity-20">
@@ -242,22 +231,21 @@ const Profile = () => {
                     </div>
                 )}
 
-                {/* Footer note */}
                 <p className="text-center text-xs text-gray-400 pb-4">
                     BloodConnect — Saving lives, one drop at a time ❤️
                 </p>
             </div>
 
-            <style >{`
-        @keyframes blob {
-          0%, 100% { transform: translate(0, 0) scale(1); }
-          25% { transform: translate(20px, -50px) scale(1.1); }
-          50% { transform: translate(-20px, 20px) scale(0.9); }
-          75% { transform: translate(50px, 50px) scale(1.05); }
-        }
-        .animate-blob { animation: blob 7s infinite; }
-        .animation-delay-2000 { animation-delay: 2s; }
-      `}</style>
+            <style>{`
+                @keyframes blob {
+                    0%, 100% { transform: translate(0, 0) scale(1); }
+                    25% { transform: translate(20px, -50px) scale(1.1); }
+                    50% { transform: translate(-20px, 20px) scale(0.9); }
+                    75% { transform: translate(50px, 50px) scale(1.05); }
+                }
+                .animate-blob { animation: blob 7s infinite; }
+                .animation-delay-2000 { animation-delay: 2s; }
+            `}</style>
         </div>
     );
 };
