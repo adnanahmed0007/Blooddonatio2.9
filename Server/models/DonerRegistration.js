@@ -20,12 +20,17 @@ const Doneruser = new mongoose.Schema({
         lowercase: true, // always store in lowercase
         match: [/^\S+@\S+\.\S+$/, "Please enter a valid email"],
     },
-    phone:
-    {
-        type: Number,
-        required: true,
-        unique: true,
-    },
+   phone: {
+    type: Number,
+    required: true,
+    unique: true,
+    validate: {
+        validator: function(v) {
+            return /^\d{10}$/.test(v.toString());
+        },
+        message: "Phone number must be exactly 10 digits"
+    }
+}
     bloodGroup:
     {
         type: String,
