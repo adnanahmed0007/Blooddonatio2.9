@@ -1,8 +1,10 @@
-import React, { useState, useEffect } from "react";
+ import React, { useState, useEffect } from "react";
 import { Link, NavLink, useLocation } from "react-router-dom";
-import { Menu, X, Heart, Droplet, Search, LogIn, UserPlus, LogOut, List,User } from "lucide-react";
-
+import { Menu, X, Heart, Droplet, Search, LogIn, UserPlus, LogOut, List, User } from "lucide-react";
+import { useContext } from "react";
+import UserContext from "./Context1";
 const Header = () => {
+  const { user } = useContext(UserContext);
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const location = useLocation();
@@ -23,17 +25,19 @@ const Header = () => {
     { name: "Donate", path: "/donate", icon: Droplet },
     { name: "View Donations", path: "/results", icon: List },
     { name: "All Blood", path: "/allviewblood", icon: List },
-      { name: "Profile", path: "/profile", icon: User },
+
 
 
 
   ];
-
   const authItems = [
-    { name: "Login", path: "/login", icon: LogIn },
-    { name: "Register", path: "/signup", icon: UserPlus },
-    { name: "Logout", path: "/logout", icon: LogOut },
-  ];
+    user && { name: "Profile", path: "/profile", icon: User },
+
+    user ? { name: "Logout", path: "/logout", icon: LogOut }
+      : { name: "Login", path: "/login", icon: LogIn },
+    !user && { name: "Register", path: "/signup", icon: UserPlus },
+  ].filter(Boolean);
+
 
   return (
     <>
